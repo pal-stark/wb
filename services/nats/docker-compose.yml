@@ -36,8 +36,6 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.stan-webui.rule=Host(`stan.wb.home.lan`)"
       - "traefik.http.routers.stan-webui.entrypoints=web"
-#      - "traefik.http.services.nats-webui.loadbalancer.server.port=8282"
-#      - "traefik.http.routers.nats-webui.service=nats-webui"
     environment:
        - STAN_URL=http://nats1:4222
        - STAN_MONITOR_URL=http://nats1:8222
