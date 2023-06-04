@@ -1,0 +1,12 @@
+{
+    "bip":"192.168.160.1/24",
+    "experimental" : true,
+    "log-driver": "json-file",
+    "log-opts": {
+      "max-size": "10m",
+      "max-file": "5",
+      "labels": "develop",
+      "env": "os,customer"
+    },
+    "storage-driver": "overlay2"
+}

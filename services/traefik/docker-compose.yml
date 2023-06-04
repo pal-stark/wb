@@ -1,0 +1,68 @@
+## YAML Template.
+---
+version: '3'
+
+services:
+  reverse-proxy:
+    # The official v2 Traefik docker image
+    image: traefik:v2.10
+    restart: always
+    # Enables the web UI and tells Traefik to listen to docker
+    #command: --providers.docker --api.insecure=true
+    command: 
+      - "--log.level=DEBUG"
+      - "--log.format=json"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--accesslog=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      
+      #- "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      #- "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      #- "--entrypoints.web.http.redirections.entrypoint.permanent=true"      
+      
+      - "--entrypoints.rabbitmq.address=:5672"      
+      #- "--entrypoints.rabbitmq.address=:5671"         
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.100000, 0.300000, 1.200000, 5.000000"
+      - "--metrics.prometheus.addEntryPointsLabels=true"
+      - "--metrics.prometheus.addServicesLabels=true"
+      - "--metrics.prometheus.entryPoint=metrics"
+      #- "--metrics.prometheus.manualrouting=true"
+      - "--entryPoints.metrics.address=:9082"     
+      - "--entryPoints.rabbitmqmetrics.address=:15692"
+      #- "--entryPoints.grafana.address=:3000"
+      - "--providers.file.directory=/config"
+
+    ports:
+      # The HTTP port
+      - "80:80"
+      - "443:443"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+      # Metrics port
+      - "9082:9082"      
+      #RabbitMq port
+      - "5672:5672"
+      #- "5671:5671"
+      #Rabbit Metrics
+      - "15692:15692"
+      #RabbitMq metrics port      
+      #- "9092:9092"
+
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./certs:/certs:ro
+      - ./config/conf.yml:/config/conf.yml:ro
+
+#    metrics:
+#      prometheus:
+#        entryPoint: metrics
+
+networks:
+  default:
+    external: true
+    name: work_bench_network

@@ -1,0 +1,91 @@
+version: '3'
+
+services:
+  nats1:
+    image: nats:2.6
+    ports:
+      - 4222:4222
+      - 8222:8222
+    command: -m 8222 --user "nats" --pass "P@assw0rd" --cluster nats://0.0.0.0:6222 --routes nats://nats3:6222
+  nats2:
+    image: nats:2.6
+    ports:
+      - 4223:4222
+      - 8223:8222
+    command: -m 8222 --user "nats" --pass "P@ssw0rd" --cluster nats://0.0.0.0:6222 --routes nats://nats1:6222
+  nats3:
+    image: nats:2.6
+    ports:
+      - 4224:422
+      - 8224:8222
+    command: -m 8222 --user "nats" --pass "P@ssw0rd" --cluster nats://0.0.0.0:6222 --routes nats://nats2:6222
+
+  nats-streaming1:
+    image: nats-streaming:0.25
+    depends_on:
+      - nats1
+      - nats2
+      - nats3
+    volumes:
+      - /var/lib/nats/nats-streaming1/data:/nats/data
+      - /var/log/nats/nats-streaming1/log:/nats/log
+    command: "--store file --dir /nats/data -clustered --cluster_log_path /nats/log --cluster_id nats-cluster --cluster_node_id nats-streaming1  --cluster_peers nats-streaming2,nats-streaming3 --cluster_sync --nats_server nats://nats:P@ssw0rd@nats1:4222,nats://nats:P@ssw0rd@nats2:4222,nats://nats:P@ssw0rd@nats3:4222"
+
+  nats-streaming2:
+    image: nats-streaming:0.25
+    depends_on:
+      - nats1
+      - nats2
+      - nats3
+    volumes:
+      - /var/lib/nats/nats-streaming2/data:/nats/data
+      - /var/log/nats/nats-streaming2/log:/nats/log
+    command: "--store file --dir /nats/data -clustered --cluster_log_path /nats/log --cluster_id nats-cluster --cluster_node_id nats-streaming2 --cluster_peers nats-streaming1,nats-streaming3 --cluster_sync --nats_server nats://nats:P@ssw0rd@nats1:4222,nats://nats:P@ssw0rd@nats2:4222,nats://nats:P@ssw0rd@nats3:4222"
+
+  nats-streaming3:
+    image: nats-streaming:0.25
+    depends_on:
+      - nats1
+      - nats2
+      - nats3
+    volumes:
+      - /var/lib/nats/nats-streaming3/data:/nats/data
+      - /var/log/nats/nats-streaming3/log:/nats/log
+    command: "--store file --dir /nats/data -clustered --cluster_log_path /nats/log --cluster_id nats-cluster --cluster_node_id nats-streaming3 --cluster_peers nats-streaming1,nats-streaming2 --cluster_sync --nats_server nats://nats:P@ssw0rd@nats1:4222,nats://nats:P@ssw0rd@nats2:4222,nats://nats:P@ssw0rd@nats3:4222"
+
+  nats-webui:
+    image: sphqxe/nats-webui
+#    image: kuali/nats-streaming-console
+#    image: piotrpersona/nats-streaming-ui
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nats-webui.rule=Host(`nats.wb.home.lan`)"
+      - "traefik.http.routers.nats-webui.entrypoints=web"
+#      - "traefik.http.services.nats-webui.loadbalancer.server.port=8282"
+#      - "traefik.http.routers.nats-webui.service=nats-webui"
+#    environment:
+#       - STAN_URL=http://nats1:4222
+#       - STAN_MONITOR_URL=http://nats1:8222
+#       - STAN_CLUSTER=local-cluster    
+
+  stan-webui:
+#    image: kuali/nats-streaming-console
+    image: piotrpersona/nats-streaming-ui
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stan-webui.rule=Host(`stan.wb.home.lan`)"
+      - "traefik.http.routers.stan-webui.entrypoints=web"
+#      - "traefik.http.services.nats-webui.loadbalancer.server.port=8282"
+#      - "traefik.http.routers.nats-webui.service=nats-webui"
+    environment:
+       - STAN_URL=http://nats1:4222
+       - STAN_MONITOR_URL=http://nats1:8222
+       - STAN_CLUSTER=local-cluster    
+
+
+networks:
+  default:
+    external: true
+    name: work_bench_network
+
+#docker run -p 8282:8282 -e STAN_URL=http://nats-url:4222 -e STAN_MONITOR_URL=http://nats-url:8222 -e STAN_CLUSTER=test-cluster piotrpersona/nats-streaming-ui:latest

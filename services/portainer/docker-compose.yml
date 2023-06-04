@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    #image: portainer/portainer-ee:latest
+    command: -H unix:///var/run/docker.sock
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data1:/data
+    labels:
+      # Portainer - Frontend
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.wb.home.lan`)"
+      - "traefik.http.routers.portainer.entrypoints=web"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+      - "traefik.http.routers.portainer.service=portainer"
+
+      # Edge
+      - "traefik.http.routers.edge.rule=Host(`edge.wb.home.lan`)"
+      - "traefik.http.routers.edge.entrypoints=web"
+      - "traefik.http.services.edge.loadbalancer.server.port=8000"
+      - "traefik.http.routers.edge.service=edge"
+    ports:
+      - "9000"  
+      - "8000"  
+     
+volumes:
+  portainer_data1:
+
+networks:
+  default:
+    external:
+      name: work_bench_network
