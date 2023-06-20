@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
   
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
-  config.vm.box_url = "https://oracle.github.io/vagrant-boxes/boxes/oraclelinux/8.json"
+  config.vm.box_url = "https://oracle.github.io/vagrant-projects/boxes/oraclelinux/8.json"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
